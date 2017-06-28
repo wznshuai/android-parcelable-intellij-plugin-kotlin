@@ -1,3 +1,4 @@
+forked from [nekocode/android-parcelable-intellij-plugin-kotlin](https://github.com/nekocode/android-parcelable-intellij-plugin-kotlin)
 # Android Parcelable boilerplate code generation
 
 **Inspired by [android-parcelable-intellij-plugin](https://github.com/mcharmas/android-parcelable-intellij-plugin)**
