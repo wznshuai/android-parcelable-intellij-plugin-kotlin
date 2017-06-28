@@ -15,9 +15,10 @@
  */
 package cn.nekocode.plugin.parcelablegenerator;
 
-import cn.nekocode.plugin.parcelablegenerator.typeserializers.*;
+import cn.nekocode.plugin.parcelablegenerator.typeserializers.CompatPropertyDescriptor;
+import cn.nekocode.plugin.parcelablegenerator.typeserializers.TypeSerializer;
+import cn.nekocode.plugin.parcelablegenerator.typeserializers.TypeSerializerFactory;
 import com.intellij.psi.PsiElement;
-import org.jetbrains.kotlin.descriptors.ValueParameterDescriptor;
 import org.jetbrains.kotlin.idea.caches.resolve.ResolutionUtils;
 import org.jetbrains.kotlin.idea.util.ImportInsertHelper;
 import org.jetbrains.kotlin.name.FqName;
@@ -32,9 +33,9 @@ import java.util.List;
  */
 public class CodeGenerator {
     private final KtClass mClass;
-    private final List<ValueParameterDescriptor> mFields;
+    private final List<CompatPropertyDescriptor> mFields;
 
-    public CodeGenerator(KtClass ktClass, List<ValueParameterDescriptor> fields) {
+    public CodeGenerator(KtClass ktClass, List<CompatPropertyDescriptor> fields) {
         mClass = ktClass;
         mFields = fields;
     }
@@ -62,15 +63,41 @@ public class CodeGenerator {
     }
 
     private String generateConstructor(List<TypeSerializer> typeSerializers) {
-        StringBuilder sb = new StringBuilder("constructor(source: Parcel) : this(");
+//        StringBuilder sb = new StringBuilder("constructor(source: Parcel) : this(");
+//        String content = "";
+//        for (TypeSerializer typeSerializer : typeSerializers) {
+//            content += "\n\t" + typeSerializer.generateReadValue() + ",";
+//        }
+//        if (content.length() > 0) {
+//            content = content.substring(0, content.length() - 1);
+//        }
+//        sb.append(content).append("\n)");
+//
+//        return sb.toString();
+        StringBuilder sb = new StringBuilder("constructor(source: Parcel): this(");
         String content = "";
+        ArrayList<TypeSerializer> temp = null;
         for (TypeSerializer typeSerializer : typeSerializers) {
-            content += "\n" + typeSerializer.generateReadValue() + ",";
+            if (typeSerializer.isConstructorField())
+                content += "\n\t" + typeSerializer.generateReadValue() + ",";
+            else {
+                if (null == temp)
+                    temp = new ArrayList<>();
+                temp.add(typeSerializer);
+            }
         }
         if (content.length() > 0) {
             content = content.substring(0, content.length() - 1);
         }
         sb.append(content).append("\n)");
+        if (null != temp && temp.size() > 0) {
+            content = "{";
+            for (TypeSerializer typeSerializer : temp) {
+                content += "\nthis." + typeSerializer.getFieldName() + " = " + typeSerializer.generateReadValue() + ";";
+            }
+            sb.append(content).append("}\n");
+        }
+
 
         return sb.toString();
     }
@@ -138,12 +165,12 @@ public class CodeGenerator {
         KtClassBody oldBodyOfCompanion = null;
 
         KtClassBody body = mClass.getBody();
-        if(body != null) {
+        if (body != null) {
             List<KtDeclaration> declarations = body.getDeclarations();
 
-            if(declarations.size() != 0) {
-                for(KtDeclaration declaration: declarations) {
-                    if(declaration instanceof KtSecondaryConstructor) {
+            if (declarations.size() != 0) {
+                for (KtDeclaration declaration : declarations) {
+                    if (declaration instanceof KtSecondaryConstructor) {
                         KtSecondaryConstructor constructor = (KtSecondaryConstructor) declaration;
 
                         PsiElement[] valueParameters = constructor.getChildren()[0].getChildren();
@@ -157,7 +184,7 @@ public class CodeGenerator {
 
                         oldDeclarations.add(declaration);
 
-                    } else if(declaration instanceof KtObjectDeclaration) {
+                    } else if (declaration instanceof KtObjectDeclaration) {
                         KtObjectDeclaration objectDeclaration = (KtObjectDeclaration) declaration;
                         if (objectDeclaration.isCompanion()) {
                             oldBodyOfCompanion = objectDeclaration.getBody();
@@ -166,9 +193,9 @@ public class CodeGenerator {
                             oldDeclarations.add(declaration);
                         }
 
-                    } else if(declaration instanceof KtNamedFunction) {
+                    } else if (declaration instanceof KtNamedFunction) {
                         String name = declaration.getName();
-                        if(name != null && !name.equals("describeContents") && !name.equals("writeToParcel")) {
+                        if (name != null && !name.equals("describeContents") && !name.equals("writeToParcel")) {
                             oldDeclarations.add(declaration);
                         }
 
@@ -183,22 +210,22 @@ public class CodeGenerator {
 
         // Add colon
         PsiElement colon = mClass.getColon();
-        if(colon == null) {
+        if (colon == null) {
             mClass.addAfter(elementFactory.createColon(), mClass.getLastChild());
         }
 
         // Check if already implement Parceable
         Boolean implementedParceable = false;
         List<KtSuperTypeListEntry> superTypeList = mClass.getSuperTypeListEntries();
-        for(KtSuperTypeListEntry superTypeListEntry : superTypeList) {
-            if(superTypeListEntry.getText().equals("Parcelable")) {
+        for (KtSuperTypeListEntry superTypeListEntry : superTypeList) {
+            if (superTypeListEntry.getText().equals("Parcelable")) {
                 implementedParceable = true;
             }
         }
 
-        if(!implementedParceable) {
+        if (!implementedParceable) {
             // Implement Parceable
-            if(superTypeList.size() > 0) {
+            if (superTypeList.size() > 0) {
                 mClass.addAfter(elementFactory.createComma(), mClass.getLastChild());
             }
 
@@ -208,7 +235,7 @@ public class CodeGenerator {
 
         // Add old declarations
         StringBuilder oldDeclarationsStr = new StringBuilder();
-        for(KtDeclaration declaration: oldDeclarations) {
+        for (KtDeclaration declaration : oldDeclarations) {
             oldDeclarationsStr.append(declaration.getText()).append("\n\n");
         }
 

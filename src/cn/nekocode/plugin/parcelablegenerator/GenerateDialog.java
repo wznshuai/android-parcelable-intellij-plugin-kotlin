@@ -15,14 +15,14 @@
  */
 package cn.nekocode.plugin.parcelablegenerator;
 
-import cn.nekocode.plugin.parcelablegenerator.utils.KtClassHelper;
+import cn.nekocode.plugin.parcelablegenerator.typeserializers.CompatPropertyDescriptor;
 import com.intellij.openapi.ui.DialogWrapper;
 import com.intellij.openapi.ui.LabeledComponent;
 import com.intellij.ui.CollectionListModel;
 import com.intellij.ui.ToolbarDecorator;
 import com.intellij.ui.components.JBList;
+import com.madai.android.plugin.utils.KtClassHelper;
 import org.jetbrains.annotations.Nullable;
-import org.jetbrains.kotlin.descriptors.ValueParameterDescriptor;
 import org.jetbrains.kotlin.psi.KtClass;
 
 import javax.swing.*;
@@ -35,21 +35,21 @@ import java.util.List;
 public class GenerateDialog extends DialogWrapper {
 
     private final LabeledComponent<JPanel> myComponent;
-    private CollectionListModel<ValueParameterDescriptor> myFileds;
+    private CollectionListModel<CompatPropertyDescriptor> myFileds;
 
     protected GenerateDialog(KtClass ktClass) {
         super(ktClass.getProject());
         setTitle("Select Fields for Parcelable Generation");
 
-        myFileds = new CollectionListModel<ValueParameterDescriptor>(KtClassHelper.findParams(ktClass));
+        myFileds = new CollectionListModel<>(KtClassHelper.INSTANCE.findAllParams(ktClass));
 
         JBList fieldList = new JBList(myFileds);
         fieldList.setCellRenderer(new DefaultListCellRenderer() {
             @Override
             public Component getListCellRendererComponent(JList list, Object value, int index, boolean isSelected, boolean cellHasFocus) {
-                ValueParameterDescriptor descriptor = (ValueParameterDescriptor) value;
-                String name = descriptor.getName().asString();
-                String type = descriptor.getType().toString();
+                CompatPropertyDescriptor descriptor = (CompatPropertyDescriptor) value;
+                String name = descriptor.propertyDescriptor.getName().asString();
+                String type = descriptor.propertyDescriptor.getType().toString();
                 Component renderer = super.getListCellRendererComponent(list, name + ": " + type, index, isSelected, cellHasFocus);
                 return renderer;
             }
@@ -69,7 +69,7 @@ public class GenerateDialog extends DialogWrapper {
         return myComponent;
     }
 
-    public List<ValueParameterDescriptor> getSelectedFields() {
+    public List<CompatPropertyDescriptor> getSelectedFields() {
         return myFileds.getItems();
     }
 }

@@ -15,16 +15,16 @@
  */
 package cn.nekocode.plugin.parcelablegenerator;
 
-import cn.nekocode.plugin.parcelablegenerator.utils.KtClassHelper;
+import cn.nekocode.plugin.parcelablegenerator.typeserializers.CompatPropertyDescriptor;
 import com.intellij.openapi.actionSystem.*;
 import com.intellij.openapi.command.WriteCommandAction;
 import com.intellij.openapi.editor.Editor;
 import com.intellij.openapi.project.Project;
-import com.intellij.openapi.ui.Messages;
 import com.intellij.psi.*;
 
 import java.util.List;
 
+import com.intellij.psi.util.PsiTreeUtil;
 import org.jetbrains.kotlin.descriptors.ValueParameterDescriptor;
 import org.jetbrains.kotlin.idea.internal.Location;
 import org.jetbrains.kotlin.psi.*;
@@ -39,22 +39,15 @@ public class ParcelableAction extends AnAction {
         KtClass ktClass = getPsiClassFromEvent(e);
 
         if(ktClass != null) {
-//            if(!ktClass.isData()) {
-//                Messages.showErrorDialog("ParcelableGenerator only support for data class.", "Sorry");
-//
-//            } else {
-//                GenerateDialog dlg = new GenerateDialog(ktClass);
-//                dlg.show();
-//                if (dlg.isOK()) {
-//                    generateParcelable(ktClass, dlg.getSelectedFields());
-//                }
-
-                generateParcelable(ktClass, KtClassHelper.findParams(ktClass));
-//            }
+            GenerateDialog dlg = new GenerateDialog(ktClass);
+            dlg.show();
+            if (dlg.isOK()) {
+                generateParcelable(ktClass, dlg.getSelectedFields());
+            }
         }
     }
 
-    private void generateParcelable(final KtClass ktClass, final List<ValueParameterDescriptor> fields) {
+    private void generateParcelable(final KtClass ktClass, final List<CompatPropertyDescriptor> fields) {
         new WriteCommandAction.Simple(ktClass.getProject(), ktClass.getContainingFile()) {
             @Override
             protected void run() throws Throwable {
@@ -85,6 +78,7 @@ public class ParcelableAction extends AnAction {
         PsiElement psiElement = psiFile.findElementAt(location.getStartOffset());
         if (psiElement == null) return null;
 
-        return KtClassHelper.getKtClassForElement(psiElement);
+//        return KtClassHelper.getKtClassForElement(psiElement);
+        return PsiTreeUtil.getParentOfType(psiElement, KtClass.class);
     }
 }

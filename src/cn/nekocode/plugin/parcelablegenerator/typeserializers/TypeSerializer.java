@@ -15,13 +15,13 @@
  */
 package cn.nekocode.plugin.parcelablegenerator.typeserializers;
 
-import org.jetbrains.kotlin.descriptors.ValueParameterDescriptor;
+import org.jetbrains.kotlin.descriptors.PropertyDescriptor;
 
 /**
  * Created by nekocode on 2016/2/2.
  */
 public abstract class TypeSerializer {
-    private final ValueParameterDescriptor field;
+    private final PropertyDescriptor field;
     private final String fieldName;
     private final String type;
     private final String noneNullType;
@@ -30,8 +30,11 @@ public abstract class TypeSerializer {
     private final boolean isProjectionTypeNullable;
     private final String noneNullProjectionType;
 
-    public TypeSerializer(ValueParameterDescriptor field) {
-        this.field = field;
+    private final boolean isConstructorField;
+
+    public TypeSerializer(CompatPropertyDescriptor propertyDescriptor) {
+        this.field = propertyDescriptor.propertyDescriptor;
+        this.isConstructorField = propertyDescriptor.isConstructorField;
         fieldName = field.getName().toString();
         type = field.getType().toString();
         isTypeNullable = type.endsWith("?");
@@ -53,7 +56,7 @@ public abstract class TypeSerializer {
 
     abstract public String generateWriteValue();
 
-    public ValueParameterDescriptor getField() {
+    public PropertyDescriptor getField() {
         return field;
     }
 
@@ -83,5 +86,9 @@ public abstract class TypeSerializer {
 
     public String getNoneNullProjectionType() {
         return noneNullProjectionType;
+    }
+
+    public boolean isConstructorField() {
+        return isConstructorField;
     }
 }

@@ -15,14 +15,12 @@
  */
 package cn.nekocode.plugin.parcelablegenerator.typeserializers;
 
-import org.jetbrains.kotlin.descriptors.ValueParameterDescriptor;
-
 /**
  * Created by nekocode on 2016/2/2.
  */
 public class CharSerializer extends TypeSerializer {
 
-    public CharSerializer(ValueParameterDescriptor field) {
+    public CharSerializer(CompatPropertyDescriptor field) {
         super(field);
     }
 

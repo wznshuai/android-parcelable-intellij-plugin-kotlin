@@ -1,6 +1,5 @@
 package cn.nekocode.plugin.parcelablegenerator.typeserializers;
 
-import org.jetbrains.kotlin.descriptors.ValueParameterDescriptor;
 import org.jetbrains.kotlin.types.KotlinType;
 
 import java.util.ArrayList;
@@ -12,10 +11,10 @@ import java.util.List;
  */
 public class TypeSerializerFactory {
 
-    public static List<TypeSerializer> createTypeSerializers(java.util.List<ValueParameterDescriptor> fields) {
+    public static List<TypeSerializer> createTypeSerializers(List<CompatPropertyDescriptor> fields) {
         List<TypeSerializer> typeSerializers = new ArrayList<TypeSerializer>();
-        for(ValueParameterDescriptor field : fields) {
-            KotlinType type = field.getType();
+        for(CompatPropertyDescriptor field : fields) {
+            KotlinType type = field.propertyDescriptor.getType();
             String typeName = type.toString();
             boolean isNullable = type.isMarkedNullable();
             typeName = isNullable ? typeName.substring(0, typeName.length() - 1) : typeName;
